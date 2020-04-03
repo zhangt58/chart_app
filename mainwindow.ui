@@ -40,7 +40,7 @@
     <item row="0" column="0">
      <widget class="QLabel" name="label">
       <property name="text">
-       <string>The below graph is created with QtCharts/QChartView.</string>
+       <string>The graph below is created with QtCharts/QChartView.</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
