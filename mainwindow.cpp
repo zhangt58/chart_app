@@ -37,3 +37,22 @@ void MainWindow::set_chart()
     ui->chartview->setRenderHint(QPainter::Antialiasing);
     ui->chartview->setChart(chart);
 }
+
+void MainWindow::on_updateButton_clicked()
+{
+    QLineSeries *series = new QLineSeries();
+
+    double x = -4.0;
+    int n = 100;
+    double delt_x = 8.0 / n;
+    for(int i=0; i<=100; i++, x+=delt_x) {
+        series->append(x, cos(x));
+    }
+
+    QChart *chart = new QChart();
+    chart->addSeries(series);
+    chart->createDefaultAxes();
+    chart->setTitle("Cosine Curve with QtCharts");
+
+    ui->chartview->setChart(chart);
+}

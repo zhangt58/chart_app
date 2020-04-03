@@ -17,6 +17,10 @@ public:
 
     void set_chart();
 
+private slots:
+    // update curve with cosine
+    void on_updateButton_clicked();
+
 private:
     Ui::MainWindow *ui;
 };
