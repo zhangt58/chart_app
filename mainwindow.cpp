@@ -32,7 +32,7 @@ void MainWindow::set_chart()
     QChart *chart = new QChart();
     chart->addSeries(series);
     chart->createDefaultAxes();
-    chart->setTitle("Sine Curve with QtChart");
+    chart->setTitle("Sine Curve with QtCharts");
 
     ui->chartview->setRenderHint(QPainter::Antialiasing);
     ui->chartview->setChart(chart);
