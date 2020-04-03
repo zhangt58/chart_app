@@ -18,6 +18,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::set_chart()
 {
+    // Create x,y points for the sine curve.
     QLineSeries *series = new QLineSeries();
 
     double x = -4.0;
@@ -27,6 +28,7 @@ void MainWindow::set_chart()
         series->append(x, sin(x));
     }
 
+    // create a chart for sine curve.
     QChart *chart = new QChart();
     chart->addSeries(series);
     chart->createDefaultAxes();
