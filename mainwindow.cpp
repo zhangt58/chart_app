@@ -32,6 +32,6 @@ void MainWindow::set_chart()
     chart->createDefaultAxes();
     chart->setTitle("Sine Curve with QtChart");
 
-    //ui->chartview->setRenderHint(QPainter::Antialiasing);
+    ui->chartview->setRenderHint(QPainter::Antialiasing);
     ui->chartview->setChart(chart);
 }
