@@ -21,6 +21,9 @@ private slots:
     // update curve with cosine
     void on_updateButton_clicked();
 
+    // curve fitting test
+    int on_fittingButton_clicked();
+
 private:
     Ui::MainWindow *ui;
 };
