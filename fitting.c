@@ -1,9 +1,9 @@
 #include "fitting.h"
 
 struct data {
-    double *t;
-    double *y;
-    size_t n;
+  double *t;
+  double *y;
+  size_t n;
 };
 
 /* model function: a * exp( -1/2 * [ (t - b) / c ]^2 ) */

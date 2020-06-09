@@ -4,8 +4,8 @@
 #include <QPainter>
 #include <QtCharts/QLineSeries>
 #include <cmath>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -72,8 +72,8 @@ int MainWindow::on_fittingButton_clicked() {
   gsl_rng_env_setup();
   r = gsl_rng_alloc(T);
 
-  fit_data.t = (double *) malloc(n * sizeof(double));
-  fit_data.y = (double *) malloc(n * sizeof(double));
+  fit_data.t = (double *)malloc(n * sizeof(double));
+  fit_data.y = (double *)malloc(n * sizeof(double));
   fit_data.n = n;
 
   /* generate synthetic data with noise */
@@ -130,7 +130,8 @@ int MainWindow::on_fittingButton_clicked() {
   chart->addSeries(series_1);
   chart->addSeries(series_2);
   chart->createDefaultAxes();
-  chart->setTitle("Nonlinear Fitting (GSL: Levenberg-Marquardt with geodesic acceleration)");
+  chart->setTitle("Nonlinear Fitting (GSL: Levenberg-Marquardt with geodesic "
+                  "acceleration)");
 
   ui->chartview->setRenderHint(QPainter::Antialiasing);
   ui->chartview->setChart(chart);

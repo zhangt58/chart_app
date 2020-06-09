@@ -4,27 +4,28 @@
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
+namespace Ui {
+class MainWindow;
+}
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
-{
-    Q_OBJECT
+class MainWindow : public QMainWindow {
+  Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+  MainWindow(QWidget *parent = nullptr);
+  ~MainWindow();
 
-    void set_chart();
+  void set_chart();
 
 private slots:
-    // update curve with cosine
-    void on_updateButton_clicked();
+  // update curve with cosine
+  void on_updateButton_clicked();
 
-    // curve fitting test
-    int on_fittingButton_clicked();
+  // curve fitting test
+  int on_fittingButton_clicked();
 
 private:
-    Ui::MainWindow *ui;
+  Ui::MainWindow *ui;
 };
 #endif // MAINWINDOW_H
