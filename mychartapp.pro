@@ -5,11 +5,11 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG += c++11
 
 win32 {
-    INCLUDEPATH += $$PWD/gsl-2.4-msvc2015_64/include
-    LIBS += $$PWD/gsl-2.4-msvc2015_64/lib/gsl/gsl.lib
-    LIBS += $$PWD/gsl-2.4-msvc2015_64/lib/gsl/cblas.lib
+    INCLUDEPATH += $$PWD/levmar-mingw32/include
+    LIBS += $$PWD/levmar-mingw32/lib/liblevmar.a
+    LIBS += $$PWD/levmar-mingw32/lib/libblas.lib
+    LIBS += $$PWD/levmar-mingw32/lib/liblapack.lib
 }
-#INCLUDEPATH += gsl-2.2-msvc2015_32/include
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the

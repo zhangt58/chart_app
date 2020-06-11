@@ -3,9 +3,11 @@
 #include "ui_mainwindow.h"
 #include <QPainter>
 #include <QtCharts/QLineSeries>
+#include <QtCharts/QScatterSeries>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <ctime>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -54,87 +56,57 @@ void MainWindow::on_updateButton_clicked() {
 }
 
 int MainWindow::on_fittingButton_clicked() {
-  const size_t n = 300;  /* number of data points to fit */
-  const size_t p = 3;    /* number of model parameters */
-  const double a = 5.0;  /* amplitude */
-  const double b = 0.4;  /* center */
-  const double c = 0.15; /* width */
-  const gsl_rng_type *T = gsl_rng_default;
-  gsl_vector *f = gsl_vector_alloc(n);
-  gsl_vector *x = gsl_vector_alloc(p);
-  gsl_multifit_nlinear_fdf fdf;
-  gsl_multifit_nlinear_parameters fdf_params =
-      gsl_multifit_nlinear_default_parameters();
-  struct data fit_data;
-  gsl_rng *r;
-  size_t i;
-
-  gsl_rng_env_setup();
-  r = gsl_rng_alloc(T);
-
-  fit_data.t = (double *)malloc(n * sizeof(double));
-  fit_data.y = (double *)malloc(n * sizeof(double));
-  fit_data.n = n;
-
-  /* generate synthetic data with noise */
-  for (i = 0; i < n; ++i) {
-    double t = (double)i / (double)n;
-    double y0 = gaussian(a, b, c, t);
-    double dy = gsl_ran_gaussian(r, 0.1 * y0);
-
-    fit_data.t[i] = t;
-    fit_data.y[i] = y0 + dy;
-  }
-
-  /* define function to be minimized */
-  fdf.f = func_f;
-  fdf.df = func_df;
-  fdf.fvv = func_fvv;
-  fdf.n = n;
-  fdf.p = p;
-  fdf.params = &fit_data;
-
-  /* starting point */
-  gsl_vector_set(x, 0, 1.0);
-  gsl_vector_set(x, 1, 0.0);
-  gsl_vector_set(x, 2, 1.0);
-
-  fdf_params.trs = gsl_multifit_nlinear_trs_lmaccel;
-  solve_system(x, &fdf, &fdf_params);
-
-  /* print data and model */
-  QLineSeries *series_1 = new QLineSeries();
+  QScatterSeries *series_1 = new QScatterSeries();
   QLineSeries *series_2 = new QLineSeries(); // after fitting
-  {
-    double A = gsl_vector_get(x, 0);
-    double B = gsl_vector_get(x, 1);
-    double C = gsl_vector_get(x, 2);
 
-    for (i = 0; i < n; ++i) {
-      double ti = fit_data.t[i];
-      double yi = fit_data.y[i];
-      double fi = gaussian(A, B, C, ti);
+  const int n = 40, m = 3; // 40 measurements, 3 parameters
+  double p[m], x[n], opts[LM_OPTS_SZ], info[LM_INFO_SZ];
 
-      series_1->append(ti, yi);
-      series_2->append(ti, fi);
-      printf("%f %f %f\n", ti, yi, fi);
-    }
+  /* generate some measurement using the exponential model with
+   * parameters (5.0, 0.1, 1.0), corrupted with zero-mean
+   * Gaussian noise of s=0.1
+   */
+  time_t t;
+  srand(time(&t));
+  for (int i = 0; i < n; ++i) {
+    x[i] = (5.0 * exp(-0.1 * i) + 1.0) + gNoise(0.0, 0.1);
+    series_1->append(i, x[i]);
   }
 
-  gsl_vector_free(f);
-  gsl_vector_free(x);
-  gsl_rng_free(r);
+  /* initial parameters estimate: (1.0, 0.0, 0.0) */
+  p[0] = 1.0;
+  p[1] = 0.0;
+  p[2] = 0.0;
+
+  /* optimization control parameters; passing to levmar NULL instead of opts
+   * reverts to defaults */
+  opts[0] = LM_INIT_MU;
+  opts[1] = 1E-15;
+  opts[2] = 1E-15;
+  opts[3] = 1E-20;
+  opts[4] = LM_DIFF_DELTA; // relevant only if the finite difference Jacobian
+                           // version is used
+
+  /* invoke the optimization function */
+  dlevmar_der(expfunc, jacexpfunc, p, x, m, n, 1000, opts, info, NULL, NULL,
+              NULL); // with analytic Jacobian
+  printf("Levenberg-Marquardt returned in %g iter, reason %g, sumsq %g [%g]\n",
+         info[5], info[6], info[1], info[0]);
+  printf("Best fit parameters: %.7g %.7g %.7g\n", p[0], p[1], p[2]);
+
+  double xx = 0, dxx = n / 200.0;
+  for (int i = 0; i < 200; ++i, xx += dxx) {
+    series_2->append(xx, gFit(xx, p));
+  }
 
   /* update chart */
   QChart *chart = new QChart();
   chart->addSeries(series_1);
   chart->addSeries(series_2);
   chart->createDefaultAxes();
-  chart->setTitle("Nonlinear Fitting (GSL: Levenberg-Marquardt with geodesic "
-                  "acceleration)");
-
+  chart->setTitle("Nonlinear Fitting (levmar: Levenberg-Marquardt nonlinear "
+                  "regression) MinGW32 with levmar lib");
   ui->chartview->setRenderHint(QPainter::Antialiasing);
   ui->chartview->setChart(chart);
-
   return 0;
 }
