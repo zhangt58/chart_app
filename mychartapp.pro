@@ -8,8 +8,9 @@ win32 {
     INCLUDEPATH += $$PWD/gsl-2.4-msvc2015_64/include
     LIBS += $$PWD/gsl-2.4-msvc2015_64/lib/gsl/gsl.lib
     LIBS += $$PWD/gsl-2.4-msvc2015_64/lib/gsl/cblas.lib
+} else {
+    LIBS += -lgsl
 }
-#INCLUDEPATH += gsl-2.2-msvc2015_32/include
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
