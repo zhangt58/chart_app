@@ -1,0 +1,37 @@
+image:
+    name: tonyzhang/xenial-builder:2.0
+    entrypoint: [""]
+
+stages:
+    - build
+    - deploy
+
+build_all:
+    stage: build
+    script:
+        -|
+        echo "Hello, $GITLAB_USER_LOGIN!"
+        /usr/lib/qt-new/bin/qmake LIBS+=-L/usr/local/lib \
+            CONFIG+=release CONFIG+=optimize_full mychartapp.pro
+        make
+        echo "Create binary tarball"
+        mkdir appdir; mv mychartapp appdir; cd appdir;
+        /tmp/squashfs-root/AppRun mychartapp \
+          -qmake=/usr/lib/qt-new/bin/qmake -bundle-non-qt-libs -no-translations
+        strip --strip-unneeded mychartapp
+        cd ..; tar cvf chart-app_${CI_COMMIT_SHA:0:8}.orig.tar.bz2 appdir
+        echo "Create self-extractable script"
+        makeself --notemp --nox11 appdir chart-app_${CI_COMMIT_SHA:0:8}.run \
+          "My Qt App with QtCharts and GSL Fitting" ./mychartapp
+    artifacts:
+        paths:
+            - chart-app_${CI_COMMIT_SHA:0:8}.orig.tar.bz2
+            - chart-app_${CI_COMMIT_SHA:0:8}.run
+        expire_in: 1 week
+
+deploy_all:
+    stage: deploy
+    script:
+        - echo "This job deploys something from branch $CI_COMMIT_BRANCH."
+        - pwd
+        - ls

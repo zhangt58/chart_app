@@ -9,7 +9,7 @@ win32 {
     LIBS += $$PWD/gsl-2.4-msvc2015_64/lib/gsl/gsl.lib
     LIBS += $$PWD/gsl-2.4-msvc2015_64/lib/gsl/cblas.lib
 } else {
-    LIBS += -lgsl
+    LIBS += -lgsl -lgslcblas -lm
 }
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
