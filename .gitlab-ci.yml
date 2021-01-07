@@ -4,12 +4,12 @@ image:
 
 stages:
     - build
-    - deploy
+    - release
 
 build_all:
     stage: build
     script:
-        -|
+      - |
         echo "Hello, $GITLAB_USER_LOGIN!"
         /usr/lib/qt-new/bin/qmake LIBS+=-L/usr/local/lib \
             CONFIG+=release CONFIG+=optimize_full mychartapp.pro
@@ -19,19 +19,27 @@ build_all:
         /tmp/squashfs-root/AppRun mychartapp \
           -qmake=/usr/lib/qt-new/bin/qmake -bundle-non-qt-libs -no-translations
         strip --strip-unneeded mychartapp
-        cd ..; tar cvf chart-app_${CI_COMMIT_SHA:0:8}.orig.tar.bz2 appdir
+        cd ..; tar cvf chart-app_${CI_COMMIT_SHORT_SHA}.orig.tar.bz2 appdir
         echo "Create self-extractable script"
-        makeself --notemp --nox11 appdir chart-app_${CI_COMMIT_SHA:0:8}.run \
+        makeself --notemp --nox11 appdir chart-app_${CI_COMMIT_SHORT_SHA}.run \
           "My Qt App with QtCharts and GSL Fitting" ./mychartapp
     artifacts:
         paths:
-            - chart-app_${CI_COMMIT_SHA:0:8}.orig.tar.bz2
-            - chart-app_${CI_COMMIT_SHA:0:8}.run
+            - chart-app_${CI_COMMIT_SHORT_SHA}.orig.tar.bz2
+            - chart-app_${CI_COMMIT_SHORT_SHA}.run
         expire_in: 1 week
 
-deploy_all:
-    stage: deploy
+release:
+    only:
+        - tags
+    stage: release
     script:
-        - echo "This job deploys something from branch $CI_COMMIT_BRANCH."
-        - pwd
-        - ls
+        - |
+          echo "New release: $CI_COMMIT_TAG."
+          mv chart-app_${CI_COMMIT_SHORT_SHA}.orig.tar.bz2 chart-app_${CI_COMMIT_TAG}.orig.tar.bz2
+          mv chart-app_${CI_COMMIT_SHORT_SHA}.run chart-app_${CI_COMMIT_TAG}.run
+    artifacts:
+        paths:
+            - chart-app_${CI_COMMIT_TAG}.orig.tar.bz2
+            - chart-app_${CI_COMMIT_TAG}.run
+        expire_in: 1 week
