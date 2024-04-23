@@ -92,5 +92,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Self-extract run file
-          path: chart-app_${{ env.SHA_SHORT }}.run"
+          path: chart-app_${{ env.SHA_SHORT }}.run
           retention-days: 7
