@@ -57,10 +57,10 @@ jobs:
           echo "Hello, ${{github.actor}}!"
           "$QMAKE" CONFIG+=release CONFIG+=optimize_full "$PRO_NAME"
           make -j$(cat /proc/cpuinfo | /bin/grep processor | wc -l)
-          echo "Create binary tarball"
 
-          mkdir chart_app
-          cp -r ${EXEC} chart_app
+          echo "Create binary tarball"
+          mkdir chart-app
+          cp -r ${EXEC} chart-app
           cd chart-app
           for app in ${EXEC}
           do
