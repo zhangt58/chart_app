@@ -59,10 +59,8 @@ jobs:
           make -j$(cat /proc/cpuinfo | /bin/grep processor | wc -l)
           echo "Create binary tarball"
 
-          cp -r ${EXEC} _install
-          rm $(find _install -iname '*.dll' -o -iname '*.exe' | xargs)
-          find _install -empty -type d -delete
-          mv _install chart-app
+          mkdir chart_app
+          cp -r ${EXEC} chart_app
           cd chart-app
           for app in ${EXEC}
           do
