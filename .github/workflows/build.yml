@@ -1,4 +1,4 @@
-name: Build a Qt Project on Linux 
+name: Build Qt Projects on Linux
 
 on:
   push:
@@ -85,12 +85,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Binary tarball
-          path: "chart-app_${SHA_SHORT}.orig.tar.xz"
+          path: chart-app_${{ env.SHA_SHORT }}.orig.tar.xz
           retention-days: 7
 
       - name: Output binary packages (2)
         uses: actions/upload-artifact@v4
         with:
           name: Self-extract run file
-          path: "chart-app_${SHA_SHORT}.run"
+          path: chart-app_${{ env.SHA_SHORT }}.run"
           retention-days: 7
