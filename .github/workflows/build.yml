@@ -2,7 +2,8 @@ name: Build Qt Projects on Linux
 
 on:
   push:
-    branches: [ gsl ]
+    # branches: [ gsl ]
+    tags: [ '*' ]
 
 env:
   LANG: "C.UTF-8"
