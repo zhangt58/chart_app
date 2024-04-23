@@ -2,7 +2,6 @@ name: Build Qt Projects on Linux
 
 on:
   push:
-    # branches: [ gsl ]
     tags: [ '*' ]
 
 env:
@@ -82,14 +81,14 @@ jobs:
             "A simple Chart App with Qt6 " ./run_app.sh
           echo "New version released: ${TAG_NAME}."
 
-      - name: Output binary packages (1)
+      - name: Publish binary packages (1)
         uses: actions/upload-artifact@v4
         with:
           name: Binary tarball
           path: chart-app_${{ env.TAG_NAME }}.orig.tar.xz
           retention-days: 7
 
-      - name: Output binary packages (2)
+      - name: Publish binary packages (2)
         uses: actions/upload-artifact@v4
         with:
           name: Self-extract run file
