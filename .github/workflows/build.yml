@@ -76,7 +76,7 @@ jobs:
 
           cd ..; tar cv chart-app | xz -9 > "chart-app_${SHA_SHORT}.orig.tar.xz"
           echo "Create self-extractable script"
-          "${MAKESELF_PATH}" "${MAKESELF_OPTS}" chart-app "chart-app_${SHA_SHORT}.run" \
+          "${MAKESELF_PATH}" ${MAKESELF_OPTS} chart-app "chart-app_${SHA_SHORT}.run" \
             "A simple Chart App with Qt6 " ./run_app.sh
           echo "New version released: ${SHA_SHORT}."
 
