@@ -1,0 +1,61 @@
+name: Build a Qt Project on Linux 
+
+on:
+  push:
+    branches: [ gsl ]
+
+env:
+  LANG: "C.UTF-8"
+  LC_ALL: "C.UTF-8"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: tonyzhang/focal-builder:5.2
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update -q -y
+          apt-get install -y libpulsedsp
+      - name: Check building env
+        run: |
+          /tmp/squashfs-root/AppRun --version
+          /usr/lib/qt-new/bin/qmake --version
+          makeself --version
+          dos2unix --version
+          apt-cache policy libpulsedsp
+      - name: Checkout repo
+        uses: actions/checkout@v2.3.1
+        with:
+          persist-credentials: false
+      - name: Check working directory
+        run: |
+          pwd
+          ls -lhtr
+      - name: Set Envs
+        run: |
+          echo "PRO_NAME=mychartapp.pro" >> "$GITHUB_ENV"
+          echo "EXEC=mychartapp" >> "$GITHUB_ENV"
+          echo "QT_DEPLOYER_PATH=/tmp/squashfs-root/AppRun" >> "$GITHUB_ENV"
+          echo "QT_DEPLOYER_OPTS=-bundle-non-qt-libs -no-translations" >> "$GITHUB_ENV"
+          echo "QMAKE=/usr/lib/qt-new/bin/qmake" >> "$GITHUB_ENV"
+          echo "MAKESELF_PATH=makeself" >> "$GITHUB_ENV"
+          echo "MAKESELF_OPTS=--notemp --nox11 --tar-quietly --xz" >> "$GITHUB_ENV"
+      - name: Check Envs
+        run: |
+          echo "$PRO_NAME"
+          echo "$EXEC"
+          echo "$QT_DEPLOYER_PATH"
+          echo "$QT_DEPLOYER_OPTS"
+          echo "$QMAKE"
+          echo "$MAKESELF_PATH"
+          echo "$MAKESELF_OPTS"
+      - name: Build binaries
+        run: |
+          echo "Hello, ${{github.actor}}!"
+          # source patching: modifinication before building
+          # sed -i '/^bool startFrom/s/.*/bool startFromFrameWork = true;/' w_Main/main.cpp
+          "$QMAKE" CONFIG+=release CONFIG+=optimize_full "$PRO_NAME"
+          make -j$(cat /proc/cpuinfo | /bin/grep processor | wc -l)
+          echo "Create binary tarball"
