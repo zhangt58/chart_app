@@ -80,7 +80,7 @@ jobs:
           echo "Create self-extractable script"
           "${MAKESELF_PATH}" "${MAKESELF_OPTS}" chart-app "chart-app_${SHA_SHORT}.run" \
             "A simple Chart App with Qt6 " ./run_app.sh
-        echo "New version released: ${SHA_SHORT}."
+          echo "New version released: ${SHA_SHORT}."
 
       - name: Output binary packages (1)
         uses: actions/upload-artifact@v4
