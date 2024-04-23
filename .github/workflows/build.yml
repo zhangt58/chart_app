@@ -42,7 +42,7 @@ jobs:
           echo "QMAKE=/usr/lib/qt-new/bin/qmake" >> "$GITHUB_ENV"
           echo "MAKESELF_PATH=makeself" >> "$GITHUB_ENV"
           echo "MAKESELF_OPTS=--notemp --nox11 --tar-quietly --xz" >> "$GITHUB_ENV"
-          echo "SHA_SHORT=$(echo ${GITHUB_SHA::6})" >> "$GITHUB_ENV"
+          echo "SHA_SHORT=$(echo ${{github.sha}} | cut -c1-6)" >> "$GITHUB_ENV"
       - name: Check Envs
         run: |
           echo "$PRO_NAME"
@@ -75,6 +75,7 @@ jobs:
           chmod +x run_app.sh
 
           cd ..; tar cv chart-app | xz -9 > "chart-app_${SHA_SHORT}.orig.tar.xz"
+
           echo "Create self-extractable script"
           "${MAKESELF_PATH}" ${MAKESELF_OPTS} chart-app "chart-app_${SHA_SHORT}.run" \
             "A simple Chart App with Qt6 " ./run_app.sh
@@ -84,12 +85,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Binary tarball
-          path: chart-app_${SHA_SHORT}.orig.tar.xz
+          path: "chart-app_${SHA_SHORT}.orig.tar.xz"
           retention-days: 7
 
-      - name: Output binary packages (1)
+      - name: Output binary packages (2)
         uses: actions/upload-artifact@v4
         with:
           name: Self-extract run file
-          path: chart-app_${SHA_SHORT}.run
+          path: "chart-app_${SHA_SHORT}.run"
           retention-days: 7
