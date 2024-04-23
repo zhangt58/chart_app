@@ -42,6 +42,7 @@ jobs:
           echo "QMAKE=/usr/lib/qt-new/bin/qmake" >> "$GITHUB_ENV"
           echo "MAKESELF_PATH=makeself" >> "$GITHUB_ENV"
           echo "MAKESELF_OPTS=--notemp --nox11 --tar-quietly --xz" >> "$GITHUB_ENV"
+          echo "SHA_SHORT=$(echo ${GITHUB_SHA::6})" >> "$GITHUB_ENV"
       - name: Check Envs
         run: |
           echo "$PRO_NAME"
@@ -54,8 +55,43 @@ jobs:
       - name: Build binaries
         run: |
           echo "Hello, ${{github.actor}}!"
-          # source patching: modifinication before building
-          # sed -i '/^bool startFrom/s/.*/bool startFromFrameWork = true;/' w_Main/main.cpp
           "$QMAKE" CONFIG+=release CONFIG+=optimize_full "$PRO_NAME"
           make -j$(cat /proc/cpuinfo | /bin/grep processor | wc -l)
           echo "Create binary tarball"
+
+          cp -r ${EXEC} _install
+          rm $(find _install -iname '*.dll' -o -iname '*.exe' | xargs)
+          find _install -empty -type d -delete
+          mv _install chart-app
+          cd chart-app
+          for app in ${EXEC}
+          do
+              ${QT_DEPLOYER_PATH} ${app} -qmake=${QMAKE} ${QT_DEPLOYER_OPTS}
+              strip --strip-unneeded ${app}
+          done
+          cat << EOF > run_app.sh
+          #!/bin/sh
+          cwdir=\`dirname \$0\`
+          \${cwdir}/mychartapp
+          EOF
+          chmod +x run_app.sh
+
+          cd ..; tar cv chart-app | xz -9 > "chart-app_${SHA_SHORT}.orig.tar.xz"
+          echo "Create self-extractable script"
+          "${MAKESELF_PATH}" "${MAKESELF_OPTS}" chart-app "chart-app_${SHA_SHORT}.run" \
+            "A simple Chart App with Qt6 " ./run_app.sh
+        echo "New version released: ${SHA_SHORT}."
+
+      - name: Output binary packages (1)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Binary tarball
+          path: chart-app_${SHA_SHORT}.orig.tar.xz
+          retention-days: 7
+
+      - name: Output binary packages (1)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Self-extract run file
+          path: chart-app_${SHA_SHORT}.run
+          retention-days: 7
