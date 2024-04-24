@@ -7,9 +7,17 @@ on:
 env:
   LANG: "C.UTF-8"
   LC_ALL: "C.UTF-8"
+  # Qt project file
+  PRO_NAME: "mychartapp.pro"
+  # executable name
+  EXEC_NAMES: "mychartapp"
+  MAIN_EXEC: "mychartapp"
+  APP: "chart-app"
+  APP_DESC: "A simple chart app with Qt6"
+  DIST_DIR: "dist"
 
 jobs:
-  build:
+  Build-App:
     runs-on: ubuntu-latest
     container:
       image: tonyzhang/focal-builder:5.2
@@ -17,7 +25,8 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update -q -y
-          apt-get install -y libpulsedsp
+          # install dependencies via apt
+          # apt-get install -y libpulsedsp
       - name: Check building env
         run: |
           /tmp/squashfs-root/AppRun --version
@@ -35,34 +44,39 @@ jobs:
           ls -lhtr
       - name: Set Envs
         run: |
-          echo "PRO_NAME=mychartapp.pro" >> "$GITHUB_ENV"
-          echo "EXEC=mychartapp" >> "$GITHUB_ENV"
+          echo "EXECS=${{env.EXEC_NAMES}}" >> "$GITHUB_ENV"
+          echo "EXEC0=${{env.MAIN_EXEC}}" >> "$GITHUB_ENV"
           echo "QT_DEPLOYER_PATH=/tmp/squashfs-root/AppRun" >> "$GITHUB_ENV"
           echo "QT_DEPLOYER_OPTS=-bundle-non-qt-libs -no-translations" >> "$GITHUB_ENV"
           echo "QMAKE=/usr/lib/qt-new/bin/qmake" >> "$GITHUB_ENV"
           echo "MAKESELF_PATH=makeself" >> "$GITHUB_ENV"
           echo "MAKESELF_OPTS=--notemp --nox11 --tar-quietly --xz" >> "$GITHUB_ENV"
           echo "TAG_NAME=$(echo ${{github.ref_name}})" >> "$GITHUB_ENV"
+          echo "DIST=${{env.DIST_DIR}}" >> "$GITHUB_ENV"
+          echo "APP_NAME=${{env.APP}}" >> "$GITHUB_ENV"
       - name: Check Envs
         run: |
-          echo "$PRO_NAME"
-          echo "$EXEC"
+          echo "$EXECS"
+          echo "$EXEC0"
           echo "$QT_DEPLOYER_PATH"
           echo "$QT_DEPLOYER_OPTS"
           echo "$QMAKE"
           echo "$MAKESELF_PATH"
           echo "$MAKESELF_OPTS"
+          echo "$TAG_NAME"
+          echo "$DIST"
+          echo "$APP_NAME"
       - name: Build binaries
         run: |
           echo "Hello, ${{github.actor}}!"
-          "$QMAKE" CONFIG+=release CONFIG+=optimize_full "$PRO_NAME"
+          "$QMAKE" CONFIG+=release CONFIG+=optimize_full "${{ env.PRO_NAME }}"
           make -j$(cat /proc/cpuinfo | /bin/grep processor | wc -l)
 
           echo "Create binary tarball"
-          mkdir chart-app
-          cp -r ${EXEC} chart-app
-          cd chart-app
-          for app in ${EXEC}
+          mkdir ${DIST}
+          cp -r ${EXECS} ${DIST}
+          cd ${DIST}
+          for app in ${EXECS}
           do
               ${QT_DEPLOYER_PATH} ${app} -qmake=${QMAKE} ${QT_DEPLOYER_OPTS}
               strip --strip-unneeded ${app}
@@ -70,27 +84,27 @@ jobs:
           cat << EOF > run_app.sh
           #!/bin/sh
           cwdir=\`dirname \$0\`
-          \${cwdir}/mychartapp
+          \${cwdir}/${EXEC0}
           EOF
           chmod +x run_app.sh
 
-          cd ..; tar cv chart-app | xz -9 > "chart-app_${TAG_NAME}.orig.tar.xz"
+          cd ..; tar cv ${DIST} | xz -9 > "${APP_NAME}_${TAG_NAME}.orig.tar.xz"
 
           echo "Create self-extractable script"
-          "${MAKESELF_PATH}" ${MAKESELF_OPTS} chart-app "chart-app_${TAG_NAME}.run" \
-            "A simple Chart App with Qt6 " ./run_app.sh
+          "${MAKESELF_PATH}" ${MAKESELF_OPTS} ${DIST} "${APP_NAME}_${TAG_NAME}.run" \
+            "${{env.APP_DESC}}" ./run_app.sh
           echo "New version released: ${TAG_NAME}."
 
       - name: Publish binary packages (1)
         uses: actions/upload-artifact@v4
         with:
           name: Binary tarball
-          path: chart-app_${{ env.TAG_NAME }}.orig.tar.xz
+          path: ${{ env.APP }}_${{ env.TAG_NAME }}.orig.tar.xz
           retention-days: 7
 
       - name: Publish binary packages (2)
         uses: actions/upload-artifact@v4
         with:
           name: Self-extract run file
-          path: chart-app_${{ env.TAG_NAME }}.run
+          path: ${{ env.APP }}_${{ env.TAG_NAME }}.run
           retention-days: 7
