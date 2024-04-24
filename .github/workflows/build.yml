@@ -9,15 +9,21 @@ env:
   LC_ALL: "C.UTF-8"
   # Qt project file
   PRO_NAME: "mychartapp.pro"
-  # executable name
+  # all executable names
   EXEC_NAMES: "mychartapp"
+  # the main executable name
   MAIN_EXEC: "mychartapp"
+  # app name
   APP: "chart-app"
+  # app description
   APP_DESC: "A simple chart app with Qt6"
+  # folder name for binary files
   DIST_DIR: "dist"
+  # TAG
+  TAG_NAME: "${{ github.ref_name }}"
 
 jobs:
-  Build-App:
+  Build:
     runs-on: ubuntu-latest
     container:
       image: tonyzhang/focal-builder:5.2
@@ -35,7 +41,7 @@ jobs:
           dos2unix --version
           apt-cache policy libpulsedsp
       - name: Checkout repo
-        uses: actions/checkout@v2.3.1
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
       - name: Check working directory
@@ -51,7 +57,6 @@ jobs:
           echo "QMAKE=/usr/lib/qt-new/bin/qmake" >> "$GITHUB_ENV"
           echo "MAKESELF_PATH=makeself" >> "$GITHUB_ENV"
           echo "MAKESELF_OPTS=--notemp --nox11 --tar-quietly --xz" >> "$GITHUB_ENV"
-          echo "TAG_NAME=$(echo ${{github.ref_name}})" >> "$GITHUB_ENV"
           echo "DIST=${{env.DIST_DIR}}" >> "$GITHUB_ENV"
           echo "APP_NAME=${{env.APP}}" >> "$GITHUB_ENV"
       - name: Check Envs
@@ -63,10 +68,9 @@ jobs:
           echo "$QMAKE"
           echo "$MAKESELF_PATH"
           echo "$MAKESELF_OPTS"
-          echo "$TAG_NAME"
           echo "$DIST"
           echo "$APP_NAME"
-      - name: Build binaries
+      - name: Build app
         run: |
           echo "Hello, ${{github.actor}}!"
           "$QMAKE" CONFIG+=release CONFIG+=optimize_full "${{ env.PRO_NAME }}"
@@ -88,23 +92,88 @@ jobs:
           EOF
           chmod +x run_app.sh
 
-          cd ..; tar cv ${DIST} | xz -9 > "${APP_NAME}_${TAG_NAME}.orig.tar.xz"
+      - name: Generate self-extractable file
+        run: |
+          "${MAKESELF_PATH}" ${MAKESELF_OPTS} ${{ env.DIST_DIR }} "${{ env.APP }}_${{ env.TAG_NAME }}.run" \
+            "${{ env.APP_DESC }}" ./run_app.sh
+          echo "New version released: ${{ env.TAG_NAME }}."
 
-          echo "Create self-extractable script"
-          "${MAKESELF_PATH}" ${MAKESELF_OPTS} ${DIST} "${APP_NAME}_${TAG_NAME}.run" \
-            "${{env.APP_DESC}}" ./run_app.sh
-          echo "New version released: ${TAG_NAME}."
+      - name: Upload self-extractable file
+        uses: actions/upload-artifact@v4
+        with:
+          name: Self-extract run file
+          path: ${{ env.APP }}_${{ env.TAG_NAME }}.run
+          retention-days: 7
 
-      - name: Publish binary packages (1)
+      - name: Upload distro artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: .binary-distro
+          path: ${{ env.DIST_DIR }}
+          retention-days: 0
+
+
+  Package:
+    needs: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          # allow fetch full history, + tags
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download distro artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: .binary-distro
+          path: ${{ env.DIST_DIR }}
+      - name: Generate binary tarball
+        run: |
+          tar cv ${{ env.DIST_DIR }} | xz -9 > "${{ env.APP }}_${{ env.TAG_NAME }}.orig.tar.xz"
+
+      - name: Upload binary tarball
         uses: actions/upload-artifact@v4
         with:
           name: Binary tarball
           path: ${{ env.APP }}_${{ env.TAG_NAME }}.orig.tar.xz
           retention-days: 7
 
-      - name: Publish binary packages (2)
+      - name: Prepare a new DEB release
+        run: |
+          this_tag=${{ env.TAG_NAME }}
+          last_tag=$(git tag --sort=-creatordate | head -2 | tail -1)
+          new_commits=$(git log ${last_tag}..${this_tag} --pretty=format:"  * %s (%an)" --date=short)
+          commit_user=$(git log -n 1 --pretty=format:"%an <%ae>")
+          cat << EOF > /tmp/new_release
+          ${{ env.APP }} (${this_tag##*v}) unstable; urgency=medium
+
+          ${new_commits}
+
+           -- ${commit_user} $(date +"%a, %d %b %Y %H:%M:%S %z")
+          EOF
+          mv /tmp/new_release .github/workflows/debian/changelog
+
+      - name: Generate DEB package
+        run: |
+          cd ${{ env.DIST_DIR }} && cp -r ../.github/workflows/debian .
+          sudo apt-get build-dep .
+          dpkg-buildpackage -uc -us
+          cd .. && ls -lhtr
+          mv ${{ env.APP }}*all.deb ${{ env.APP }}_${{ env.TAG_NAME }}_all.deb
+      - name: Upload DEB package
         uses: actions/upload-artifact@v4
         with:
-          name: Self-extract run file
-          path: ${{ env.APP }}_${{ env.TAG_NAME }}.run
+          name: DEB package
+          path: ${{ env.APP }}_${{ env.TAG_NAME }}_all.deb
           retention-days: 7
+
+  Clean:
+    needs: Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clean up artifacts
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: .binary-distro

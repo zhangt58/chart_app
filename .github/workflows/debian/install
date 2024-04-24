@@ -1,0 +1,5 @@
+doc /opt/chart-app
+lib /opt/chart-app
+mychartapp /opt/chart-app
+plugins /opt/chart-app
+qt.conf /opt/chart-app

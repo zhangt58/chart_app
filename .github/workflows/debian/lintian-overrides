@@ -1,0 +1,11 @@
+arch-independent-package-contains-binary-or-object
+dir-or-file-in-opt
+embedded-library
+unstripped-binary-or-object
+description-synopsis-starts-with-article
+no-manual-page
+shared-library-lacks-prerequisites
+undeclared-elf-prerequisites
+binary-has-unneeded-section
+package-contains-documentation-outside-usr-share-doc
+spelling-error-in-binary

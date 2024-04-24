@@ -1,0 +1,16 @@
+Source: chart-app
+Section: misc
+Priority: optional
+Maintainer: Tong Zhang <zhangt@frib.msu.edu>
+Build-Depends: debhelper-compat (= 12)
+Standards-Version: 4.6.2
+Homepage: https://github.com/zhangt58/chart_app
+
+Package: chart-app
+Architecture: all
+Description: A simple QtChart app on Qt6
+ This is a simple example of how to use Qt6, QtChart and GSL to build a
+ chart GUI app.
+ .
+ This package installs the binary files compiled with modern Qt GUI
+ framework.

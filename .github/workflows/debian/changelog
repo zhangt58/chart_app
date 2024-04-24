@@ -1,0 +1,6 @@
+chart-app ({native-version}) unstable; urgency=medium
+
+  * {commits spanning multiple lines ...}
+
+ -- {author} <{email}>  {date} # date format: Fri, 17 Nov 2023 15:11:27 -0500
+
