@@ -80,6 +80,7 @@ jobs:
           makeself ${{ env.MAKESELF_OPTS }} ${{ env.DIST_DIR }} \
             "${{ env.APP }}_${{ env.TAG_NAME }}.run" \
             "${{ env.APP_DESC }}" ./run_app.sh
+          chmod +x "${{ env.APP }}_${{ env.TAG_NAME }}.run"
           echo "New version released: ${{ env.TAG_NAME }}."
 
       - name: Upload self-extractable file
