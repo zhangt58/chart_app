@@ -5,8 +5,6 @@ on:
     tags: [ '*' ]
 
 env:
-  LANG: "C.UTF-8"
-  LC_ALL: "C.UTF-8"
   # Qt project file
   PRO_NAME: "mychartapp.pro"
   # all executable names
@@ -19,8 +17,13 @@ env:
   APP_DESC: "A simple chart app with Qt6"
   # folder name for binary files
   DIST_DIR: "dist"
+
+  LANG: "C.UTF-8"
+  LC_ALL: "C.UTF-8"
+
   # TAG
   TAG_NAME: "${{ github.ref_name }}"
+
   # Qt deploy opts (default)
   QT_DEPLOYER_OPTS: -bundle-non-qt-libs -no-translations
   # makeself opts (default)
@@ -89,7 +92,7 @@ jobs:
       - name: Upload distro artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: .binary-distro
+          name: .binary-distro.TBD
           path: ${{ env.DIST_DIR }}
           retention-days: 0
 
@@ -108,7 +111,7 @@ jobs:
       - name: Download distro artifacts
         uses: actions/download-artifact@v4
         with:
-          name: .binary-distro
+          name: .binary-distro.TBD
           path: ${{ env.DIST_DIR }}
       - name: Generate binary tarball
         run: |
@@ -157,4 +160,4 @@ jobs:
       - name: Clean up artifacts
         uses: geekyeggo/delete-artifact@v5
         with:
-          name: .binary-distro
+          name: .binary-distro.TBD
