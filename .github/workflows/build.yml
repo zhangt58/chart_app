@@ -21,80 +21,61 @@ env:
   DIST_DIR: "dist"
   # TAG
   TAG_NAME: "${{ github.ref_name }}"
+  # Qt deploy opts (default)
+  QT_DEPLOYER_OPTS: -bundle-non-qt-libs -no-translations
+  # makeself opts (default)
+  MAKESELF_OPTS: --notemp --nox11 --tar-quietly --xz
 
 jobs:
   Build:
     runs-on: ubuntu-latest
     container:
-      image: tonyzhang/focal-builder:5.2
+      image: tonyzhang/focal-builder:5.3
+
     steps:
-      - name: Install dependencies
-        run: |
-          apt-get update -q -y
-          # install dependencies via apt
-          # apt-get install -y libpulsedsp
       - name: Check building env
         run: |
-          /tmp/squashfs-root/AppRun --version
-          /usr/lib/qt-new/bin/qmake --version
+          linuxdeployqt --version
+          qmake --version
           makeself --version
           dos2unix --version
-          apt-cache policy libpulsedsp
+
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+
       - name: Check working directory
         run: |
           pwd
           ls -lhtr
-      - name: Set Envs
-        run: |
-          echo "EXECS=${{env.EXEC_NAMES}}" >> "$GITHUB_ENV"
-          echo "EXEC0=${{env.MAIN_EXEC}}" >> "$GITHUB_ENV"
-          echo "QT_DEPLOYER_PATH=/tmp/squashfs-root/AppRun" >> "$GITHUB_ENV"
-          echo "QT_DEPLOYER_OPTS=-bundle-non-qt-libs -no-translations" >> "$GITHUB_ENV"
-          echo "QMAKE=/usr/lib/qt-new/bin/qmake" >> "$GITHUB_ENV"
-          echo "MAKESELF_PATH=makeself" >> "$GITHUB_ENV"
-          echo "MAKESELF_OPTS=--notemp --nox11 --tar-quietly --xz" >> "$GITHUB_ENV"
-          echo "DIST=${{env.DIST_DIR}}" >> "$GITHUB_ENV"
-          echo "APP_NAME=${{env.APP}}" >> "$GITHUB_ENV"
-      - name: Check Envs
-        run: |
-          echo "$EXECS"
-          echo "$EXEC0"
-          echo "$QT_DEPLOYER_PATH"
-          echo "$QT_DEPLOYER_OPTS"
-          echo "$QMAKE"
-          echo "$MAKESELF_PATH"
-          echo "$MAKESELF_OPTS"
-          echo "$DIST"
-          echo "$APP_NAME"
+
       - name: Build app
         run: |
           echo "Hello, ${{github.actor}}!"
-          "$QMAKE" CONFIG+=release CONFIG+=optimize_full "${{ env.PRO_NAME }}"
+          qmake CONFIG+=release CONFIG+=optimize_full "${{ env.PRO_NAME }}"
           make -j$(cat /proc/cpuinfo | /bin/grep processor | wc -l)
 
           echo "Create binary tarball"
-          mkdir ${DIST}
-          cp -r ${EXECS} ${DIST}
-          cd ${DIST}
-          for app in ${EXECS}
+          mkdir ${{ env.DIST_DIR }}
+          cp -r ${{ env.EXEC_NAMES }} ${{ env.DIST_DIR }}
+          cd ${{ env.DIST_DIR }}
+          for app in ${{ env.EXEC_NAMES }}
           do
-              ${QT_DEPLOYER_PATH} ${app} -qmake=${QMAKE} ${QT_DEPLOYER_OPTS}
+              linuxdeployqt ${app} -qmake=qmake ${{ env.QT_DEPLOYER_OPTS }}
               strip --strip-unneeded ${app}
           done
           cat << EOF > run_app.sh
           #!/bin/sh
           cwdir=\`dirname \$0\`
-          \${cwdir}/${EXEC0}
+          \${cwdir}/${{ env.MAIN_EXEC }}
           EOF
           chmod +x run_app.sh
 
       - name: Generate self-extractable file
         run: |
-          "${MAKESELF_PATH}" ${MAKESELF_OPTS} ${{ env.DIST_DIR }} "${{ env.APP }}_${{ env.TAG_NAME }}.run" \
+          makeself ${{ env.MAKESELF_OPTS }} ${{ env.DIST_DIR }} \
+            "${{ env.APP }}_${{ env.TAG_NAME }}.run" \
             "${{ env.APP_DESC }}" ./run_app.sh
           echo "New version released: ${{ env.TAG_NAME }}."
 
