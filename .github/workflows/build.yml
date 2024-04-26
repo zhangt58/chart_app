@@ -39,13 +39,22 @@ jobs:
           persist-credentials: false
 
       - name: Build with my action
-        uses: zhangt58/hello-world-docker-action@v3.2
+        uses: zhangt58/hello-world-docker-action@v3.3
         id: appbuild
         with:
           project_name: "mychartapp.pro"
           app_name: "chart-app"
-          #dist_dir: 'dist'
+          exec_names: "mychartapp"
+          dist_dir: "dist"
+
 
       - name: Get the output from my action
         run: |
           echo "my action output was ${{ steps.appbuild.outputs.time }}"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: distro
+          path: ./dist
+          retention-days: 1
