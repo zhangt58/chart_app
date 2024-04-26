@@ -4,23 +4,23 @@ on: [ push ]
 
 env:
   # Qt project file
-  PRO_NAME: "mychartapp.pro"
+  #PRO_NAME: "mychartapp.pro"
   # all executable names
-  EXEC_NAMES: "mychartapp"
+  #EXEC_NAMES: "mychartapp"
   # the main executable name
-  MAIN_EXEC: "mychartapp"
+  #MAIN_EXEC: "mychartapp"
   # app name
-  APP: "chart-app"
+  #APP: "chart-app"
   # app description
-  APP_DESC: "A simple chart app with Qt6"
+  #APP_DESC: "A simple chart app with Qt6"
   # folder name for binary files
-  DIST_DIR: "dist"
+  #DIST_DIR: "dist"
 
   LANG: "C.UTF-8"
   LC_ALL: "C.UTF-8"
 
   # TAG
-  TAG_NAME: "${{ github.ref_name }}"
+  #TAG_NAME: "${{ github.ref_name }}"
 
 jobs:
   Build:
@@ -34,12 +34,11 @@ jobs:
           persist-credentials: false
 
       - name: Build with my action
-        uses: zhangt58/hello-world-docker-action@v3.6
+        uses: zhangt58/hello-world-docker-action@v3.7
         id: appbuild
         with:
           project_file: "mychartapp.pro"
           app_name: "chart-app"
-          app_version: "${{ github.ref_name }}"
           exec_names: "mychartapp"
           dist_dir: "dist"
 
