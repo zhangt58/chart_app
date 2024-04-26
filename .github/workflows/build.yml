@@ -2,7 +2,7 @@ name: Build Qt Projects on Linux
 
 on: [ push ]
 
-env:
+#env:
   # Qt project file
   #PRO_NAME: "mychartapp.pro"
   # all executable names
@@ -16,8 +16,8 @@ env:
   # folder name for binary files
   #DIST_DIR: "dist"
 
-  LANG: "C.UTF-8"
-  LC_ALL: "C.UTF-8"
+  # LANG: "C.UTF-8"
+  # LC_ALL: "C.UTF-8"
 
   # TAG
   #TAG_NAME: "${{ github.ref_name }}"
