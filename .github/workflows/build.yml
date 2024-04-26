@@ -33,8 +33,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Build with my action
-        uses: zhangt58/hello-world-docker-action@v3.8
+      - uses: zhangt58/hello-world-docker-action@v3.8
         id: appbuild
         with:
           project_file: "mychartapp.pro"
