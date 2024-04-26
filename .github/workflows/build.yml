@@ -37,7 +37,7 @@ jobs:
         uses: zhangt58/hello-world-docker-action@v3.6
         id: appbuild
         with:
-          project_name: "mychartapp.pro"
+          project_file: "mychartapp.pro"
           app_name: "chart-app"
           app_version: "${{ github.ref_name }}"
           exec_names: "mychartapp"
