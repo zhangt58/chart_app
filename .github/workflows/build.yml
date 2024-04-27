@@ -1,6 +1,8 @@
 name: Build Qt Projects on Linux
 
-on: [ push ]
+on:
+  push:
+    tags: [ '*' ]
 
 jobs:
   Build:
