@@ -12,7 +12,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Build with qt-app-builder
-        uses: zhangt58/qt-app-builder@v1
+        uses: zhangt58/qt-app-builder@v1.1
         id: appbuild
         with:
           project_file: "mychartapp.pro"
@@ -22,6 +22,7 @@ jobs:
       - name: Get the output from qt-app-builder
         run: |
           echo "Self-extract artifacts: ${{ steps.appbuild.outputs.run_filename }}"
+          echo "Binary distro artifacts: ${{ steps.appbuild.outputs.binary_distro }}"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -29,3 +30,75 @@ jobs:
           name: Self-extractable run file
           path: ${{ steps.appbuild.outputs.run_filename }}
           retention-days: 1
+
+      - name: Upload distro artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: .binary-distro.TBD
+          path: ${{ steps.appbuild.outputs.binary_distro }}
+          retention-days: 0
+
+  Package:
+    needs: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          # allow fetch full history, + tags
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download distro artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: .binary-distro.TBD
+          path: ${{ needs.Build.steps.appbuild.outputs.binary_distro }}
+      - name: Generate binary tarball
+        run: |
+          tar cv ${{ env.INPUT_DIST_DIR }} | xz -9 > "${{ env.INPUT_APP_NAME }}_${{ env.INPUT_APP_VERSION }}.orig.tar.xz"
+
+      - name: Upload binary tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: Binary tarball
+          path: ${{ env.INPUT_APP_NAME }}_${{ env.INPUT_APP_VERSION }}.orig.tar.xz
+          retention-days: 7
+
+      - name: Prepare a new DEB release
+        run: |
+          this_tag=${{ env.INPUT_APP_VERSION }}
+          last_tag=$(git tag --sort=-creatordate | head -2 | tail -1)
+          new_commits=$(git log ${last_tag}..${this_tag} --pretty=format:"  * %s (%an)" --date=short)
+          commit_user=$(git log -n 1 --pretty=format:"%an <%ae>")
+          cat << EOF > /tmp/new_release
+          ${{ env.INPUT_APP_NAME }} (${this_tag##*v}) unstable; urgency=medium
+
+          ${new_commits}
+
+           -- ${commit_user} $(date +"%a, %d %b %Y %H:%M:%S %z")
+          EOF
+          mv /tmp/new_release .github/workflows/debian/changelog
+
+      - name: Generate DEB package
+        run: |
+          cd ${{ env.INPUT_DIST_DIR }} && cp -r ../.github/workflows/debian .
+          sudo apt-get build-dep .
+          dpkg-buildpackage -uc -us
+          cd .. && ls -lhtr
+          mv ${{ env.INPUT_APP_NAME }}*all.deb ${{ env.INPUT_APP_NAME }}_${{ env.INPUT_APP_VERSION }}_all.deb
+      - name: Upload DEB package
+        uses: actions/upload-artifact@v4
+        with:
+          name: DEB package
+          path: ${{ env.INPUT_APP_NAME }}_${{ env.INPUT_APP_VERSION }}_all.deb
+          retention-days: 7
+
+  Clean:
+    needs: Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clean up artifacts
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: .binary-distro.TBD
