@@ -12,7 +12,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Build with qt-app-builder
-        uses: zhangt58/qt-app-builder@v1.1
+        uses: zhangt58/qt-app-builder@v1.2
         id: appbuild
         with:
           project_file: "mychartapp.pro"
@@ -21,21 +21,23 @@ jobs:
 
       - name: Get the output from qt-app-builder
         run: |
-          echo "Self-extract artifacts: ${{ steps.appbuild.outputs.run_filename }}"
-          echo "Binary distro artifacts: ${{ steps.appbuild.outputs.binary_distro }}"
+          echo "RUN_FILENAME=${{ steps.appbuild.outputs.run_filename }}" >> $GITHUB_ENV
+          echo "BINARY_DIST=${{ steps.appbuild.outputs.binary_distro }}" >> $GITHUB_ENV
+          echo "APP_NAME=${{ steps.appbuild.outputs.app_name }}" >> $GITHUB_ENV
+          echo "APP_VERSION=${{ steps.appbuild.outputs.app_version }}" >> $GITHUB_ENV
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Self-extractable run file
-          path: ${{ steps.appbuild.outputs.run_filename }}
+          path: ${{ env.RUN_FILENAME }}
           retention-days: 1
 
       - name: Upload distro artifacts
         uses: actions/upload-artifact@v4
         with:
           name: .binary-distro.TBD
-          path: ${{ steps.appbuild.outputs.binary_distro }}
+          path: ${{ env.BINARY_DIST }}
           retention-days: 0
 
   Package:
@@ -53,26 +55,27 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .binary-distro.TBD
-          path: ${{ needs.Build.steps.appbuild.outputs.binary_distro }}
+          path: ${{ env.BINARY_DIST }}
       - name: Generate binary tarball
         run: |
-          tar cv ${{ env.INPUT_DIST_DIR }} | xz -9 > "${{ env.INPUT_APP_NAME }}_${{ env.INPUT_APP_VERSION }}.orig.tar.xz"
+          echo "BINARY_TARBALL=${{ env.APP_NAME }}_${{ env.APP_VERSION }}.orig.tar.xz" >> $GITHUB_ENV
+          tar cv ${{ env.BINARY_DIST }} | xz -9 > ${{ env.BINARY_TARBALL }}
 
       - name: Upload binary tarball
         uses: actions/upload-artifact@v4
         with:
           name: Binary tarball
-          path: ${{ env.INPUT_APP_NAME }}_${{ env.INPUT_APP_VERSION }}.orig.tar.xz
+          path: ${{ env.BINARY_TARBALL }}
           retention-days: 7
 
       - name: Prepare a new DEB release
         run: |
-          this_tag=${{ env.INPUT_APP_VERSION }}
+          this_tag=${{ env.APP_VERSION }}
           last_tag=$(git tag --sort=-creatordate | head -2 | tail -1)
           new_commits=$(git log ${last_tag}..${this_tag} --pretty=format:"  * %s (%an)" --date=short)
           commit_user=$(git log -n 1 --pretty=format:"%an <%ae>")
           cat << EOF > /tmp/new_release
-          ${{ env.INPUT_APP_NAME }} (${this_tag##*v}) unstable; urgency=medium
+          ${{ env.APP_NAME }} (${this_tag##*v}) unstable; urgency=medium
 
           ${new_commits}
 
@@ -82,16 +85,16 @@ jobs:
 
       - name: Generate DEB package
         run: |
-          cd ${{ env.INPUT_DIST_DIR }} && cp -r ../.github/workflows/debian .
+          cd ${{ env.BINARY_DIST }} && cp -r ../.github/workflows/debian .
           sudo apt-get build-dep .
           dpkg-buildpackage -uc -us
           cd .. && ls -lhtr
-          mv ${{ env.INPUT_APP_NAME }}*all.deb ${{ env.INPUT_APP_NAME }}_${{ env.INPUT_APP_VERSION }}_all.deb
+          mv ${{ env.APP_NAME }}*all.deb ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_all.deb
       - name: Upload DEB package
         uses: actions/upload-artifact@v4
         with:
           name: DEB package
-          path: ${{ env.INPUT_APP_NAME }}_${{ env.INPUT_APP_VERSION }}_all.deb
+          path: ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_all.deb
           retention-days: 7
 
   Clean:
