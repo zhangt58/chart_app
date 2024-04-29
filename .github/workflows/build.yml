@@ -24,7 +24,11 @@ jobs:
           app_name: "chart-app"
           exec_names: "mychartapp"
           extra_requires: "git"
-          post_dist: "pwd;ls -lhtr;rm $(find . -iname '*.dll' -o -iname '*.exe' | xargs);find . -empty -type d -delete"
+          post_dist: |
+            pwd
+            ls -lhtr
+            find . -iname '*.dll' -o -iname '*.exe' -exec rm {} \;
+            find . -empty -type d -delete
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
