@@ -24,7 +24,7 @@ jobs:
           app_name: "chart-app"
           exec_names: "mychartapp"
           extra_requires: "git"
-          override_distclean: "pwd;ls -lhtr"
+          post_dist: "pwd;ls -lhtr;rm $(find . -iname '*.dll' -o -iname '*.exe' | xargs);find . -empty -type d -delete"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
