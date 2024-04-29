@@ -17,13 +17,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Build with qt-app-builder
-        uses: zhangt58/qt-app-builder@v1.3
+        uses: zhangt58/qt-app-builder@v1.3.1
         id: appbuild
         with:
           project_file: "mychartapp.pro"
           app_name: "chart-app"
           exec_names: "mychartapp"
           extra_requires: "git"
+          override_distclean: "pwd;ls -lhtr"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
