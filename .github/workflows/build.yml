@@ -17,7 +17,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Build with qt-app-builder
-        uses: zhangt58/qt-app-builder@v1.3.1
+        uses: zhangt58/qt-app-builder@v1.3
         id: appbuild
         with:
           project_file: "mychartapp.pro"
@@ -27,7 +27,10 @@ jobs:
           post_dist: |
             pwd
             ls -lhtr
+            cp -arv ../gsl-2.4-msvc2015_64/* .
+            echo "delete dll and exe files"
             find . -iname '*.dll' -o -iname '*.exe' -exec rm {} \;
+            echo "delete empty folders"
             find . -empty -type d -delete
 
       - name: Upload artifacts
