@@ -38,7 +38,7 @@ jobs:
         with:
           name: Self-extractable run file
           path: ${{ steps.appbuild.outputs.run_filename }}
-          retention-days: 1
+          retention-days: 7
 
       - name: Upload distro artifacts
         uses: actions/upload-artifact@v4
