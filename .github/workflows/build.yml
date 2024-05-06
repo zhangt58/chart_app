@@ -32,6 +32,8 @@ jobs:
             find . -iname '*.dll' -o -iname '*.exe' -exec rm {} \;
             echo "delete empty folders"
             find . -empty -type d -delete
+            # add arguments support
+            sed -i /mychartapp/"s/\(.*\)/\1 \$@/" run_app.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
